@@ -106,23 +106,61 @@ class Rule {
 
 条件 `Condition = { field, operator, value }`，`field` 取自环境数据（温度/湿度/光照/是否有人）。
 
-### 2. 规则引擎执行流程
+### 2. 双条件规则（核心能力）
+
+**规则支持由多个条件共同决定触发**。`conditions` 是数组，`logic` 决定多个条件如何组合：
+
+| logic | 语义 | 触发条件 |
+| --- | --- | --- |
+| `AND` | 所有条件**同时满足**才触发 | `conditions.every(...)` |
+| `OR` | 任一条件满足即触发 | `conditions.some(...)` |
+
+**内置双条件规则示例**（`common/DefaultData.ets`）：
+
+> 规则「高温且有人开空调」—— 当 **温度 > 28** **且（AND）** **有人** 两个条件同时满足时，自动开启空调并设为 24℃。
+
+```typescript
+new Rule(
+  'rule_hot_occupy',
+  '高温且有人开空调',
+  [
+    { field: ConditionField.TEMPERATURE, operator: Operator.GT, value: 28 }, // 条件1
+    { field: ConditionField.OCCUPANCY,  operator: Operator.EQ, value: 1  }  // 条件2
+  ],
+  Logic.AND,  // 两个条件共同决定（缺一不可）
+  [{ deviceId: 'aircon', deviceType: DeviceType.AIRCON, on: true, setValue: 24 }],
+  1, true
+);
+```
+
+**引擎求值实现**（`engine/RuleEngine.ets` 的 `evaluateRule`）：
+
+```typescript
+const results = rule.conditions.map((c) => evaluateCondition(c, env));
+const triggered = rule.logic === Logic.AND
+  ? results.every((r) => r === true)   // 双条件：全部满足
+  : results.some((r) => r === true);   // 单/多条件：任一满足
+```
+
+> 验收对应：温度 28℃ 且无人 → 不触发；温度 29℃ 且有人 → 触发。该双条件行为已有单元测试覆盖（见 `RuleEngine.test.ets` 的 `evaluateRule_double_condition_and` 用例）。
+
+### 3. 规则引擎执行流程
 
 1. 遍历所有**启用**的规则，用 `evaluateRule(rule, env)` 求值；
 2. 按 `priority` 升序排序（同优先级按 id 稳定排序）；
 3. 依次执行动作，同一设备被多条规则操控时，检测冲突并记录；
 4. 生成 `ExecutionBatch` 日志（含触发条件、设备变化、执行顺序、冲突说明）。
 
-### 3. 冲突处理示例（内置规则已演示）
+### 4. 冲突处理示例（内置规则已演示）
 
 - 规则「高温且有人开空调」：温度>28 且 有人 → 空调开(24℃)，优先级 1
 - 规则「超高温节能关空调」：温度>30 → 空调关，优先级 2
 
 当温度 31℃ 且有人时，两条规则同时触发并都控制空调。引擎先执行优先级 1 的「开空调」，再执行优先级 2 的「关空调」，最终设备关闭，并在日志中标记冲突说明。
 
-### 4. 持久化
+### 5. 持久化
 
-- **Preferences**（`dorm_automation`）：设备开关与数值状态
+- **Preferences**（`dorm_automation`）：设备开关与数值状态、环境数据
 - **RDB**（`dorm.db`）：`rules` 表（规则）、`logs` 表（执行记录）
 
 应用启动时 `EntryAbility.onCreate` 调用 `StoreManager.init()` + `appState.restore()` 恢复状态。
