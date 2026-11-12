@@ -1,6 +1,7 @@
 /**
  * 事件通信常量与工具
  * 使用 @ohos.events.emitter 实现跨组件事件通知
+ * 注意：负载仅用于通知"发生了什么"，不携带复杂对象，避免 ArkTS 对象字面量限制
  */
 import emitter from '@ohos.events.emitter';
 
@@ -21,18 +22,17 @@ export enum EventType {
 /** 事件数据包装 */
 export interface EventData {
   type: EventType;
-  payload?: Record<string, Object>;
 }
 
 /**
  * 广播事件
  */
-export function emit(type: EventType, payload?: Record<string, Object>): void {
+export function emit(type: EventType): void {
   const event: emitter.InnerEvent = {
     eventId: 1,
     priority: emitter.EventPriority.LOW
   };
-  const data: EventData = { type: type, payload: payload };
+  const data: EventData = { type: type };
   emitter.emit(event, { data: data });
 }
 

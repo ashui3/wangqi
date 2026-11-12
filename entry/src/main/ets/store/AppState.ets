@@ -51,13 +51,44 @@ export class AppState {
   }
 
   /**
-   * 更新环境数据并触发规则重算
+   * 更新环境数据并触发规则重算（通用私有方法）
    */
-  async updateEnv(partial: Partial<EnvState>): Promise<void> {
-    Object.assign(this.env, partial);
+  private async applyEnvChange(): Promise<void> {
     await this.store.saveEnv(this.env);
-    emit(EventType.ENV_CHANGED, { env: this.env as Object });
+    emit(EventType.ENV_CHANGED);
     await this.runEngine();
+  }
+
+  /**
+   * 设置温度并触发联动
+   */
+  async setTemperature(value: number): Promise<void> {
+    this.env.temperature = value;
+    await this.applyEnvChange();
+  }
+
+  /**
+   * 设置湿度并触发联动
+   */
+  async setHumidity(value: number): Promise<void> {
+    this.env.humidity = value;
+    await this.applyEnvChange();
+  }
+
+  /**
+   * 设置光照并触发联动
+   */
+  async setIlluminance(value: number): Promise<void> {
+    this.env.illuminance = value;
+    await this.applyEnvChange();
+  }
+
+  /**
+   * 设置是否有人并触发联动
+   */
+  async setOccupancy(value: boolean): Promise<void> {
+    this.env.occupancy = value;
+    await this.applyEnvChange();
   }
 
   /**
@@ -147,7 +178,7 @@ export class AppState {
       this.env = new EnvState(scene.env.temperature, scene.env.humidity,
         scene.env.illuminance, scene.env.occupancy);
       await this.store.saveEnv(this.env);
-      emit(EventType.SCENE_LOADED, { sceneId: sceneId });
+      emit(EventType.SCENE_LOADED);
       await this.runEngine();
     }
   }

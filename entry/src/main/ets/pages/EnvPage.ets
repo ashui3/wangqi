@@ -2,7 +2,7 @@
  * 环境调节页
  * 3 项可调的模拟环境数据（温度/湿度/光照）+ 是否有人
  */
-import { EnvState, ENV_FIELDS, EnvFieldMeta } from '../model/EnvState';
+import { ENV_FIELDS, EnvFieldMeta } from '../model/EnvState';
 import { appState } from '../store/AppState';
 
 @Component
@@ -63,7 +63,7 @@ export struct EnvPage {
           Toggle({ type: ToggleType.Switch, isOn: appState.env.occupancy })
             .selectedColor('#1677ff')
             .onChange((isOn: boolean) => {
-              appState.updateEnv({ occupancy: isOn } as Partial<EnvState>);
+              appState.setOccupancy(isOn);
             })
         }
         .width('100%')
@@ -90,9 +90,16 @@ export struct EnvPage {
   }
 
   private getNumberValue(field: EnvFieldMeta): number {
-    const env = appState.env as Record<string, Object>;
-    const v = env[field.key];
-    return typeof v === 'number' ? v : 0;
+    switch (field.key) {
+      case 'temperature':
+        return appState.env.temperature;
+      case 'humidity':
+        return appState.env.humidity;
+      case 'illuminance':
+        return appState.env.illuminance;
+      default:
+        return 0;
+    }
   }
 
   private formatValue(field: EnvFieldMeta): string {
@@ -104,8 +111,18 @@ export struct EnvPage {
   }
 
   private applyNumber(field: EnvFieldMeta, value: number): void {
-    const partial: Partial<EnvState> = {};
-    (partial as Record<string, Object>)[field.key] = value;
-    appState.updateEnv(partial);
+    switch (field.key) {
+      case 'temperature':
+        appState.setTemperature(value);
+        break;
+      case 'humidity':
+        appState.setHumidity(value);
+        break;
+      case 'illuminance':
+        appState.setIlluminance(value);
+        break;
+      default:
+        break;
+    }
   }
 }

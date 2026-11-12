@@ -17,10 +17,24 @@ const PREFERENCES_NAME = 'dorm_automation';
 const DB_NAME = 'dorm.db';
 
 /** 设备状态序列化（存 Preferences） */
-interface DevicePref {
+class DevicePref {
   id: string;
   on: boolean;
   value: number;
+
+  constructor(id: string, on: boolean, value: number) {
+    this.id = id;
+    this.on = on;
+    this.value = value;
+  }
+}
+
+/** 环境数据序列化（存 Preferences） */
+interface EnvPref {
+  temperature: number;
+  humidity: number;
+  illuminance: number;
+  occupancy: boolean;
 }
 
 export class StoreManager {
@@ -91,7 +105,7 @@ export class StoreManager {
     if (!this.pref) {
       return;
     }
-    const list: DevicePref[] = devices.map((d: Device) => ({ id: d.id, on: d.on, value: d.value }));
+    const list: DevicePref[] = devices.map((d: Device) => new DevicePref(d.id, d.on, d.value));
     await this.pref.put('devices', JSON.stringify(list));
     await this.pref.flush();
   }
@@ -109,7 +123,7 @@ export class StoreManager {
       return defaults;
     }
     try {
-      const list: DevicePref[] = JSON.parse(raw as string);
+      const list: DevicePref[] = JSON.parse(raw as string) as DevicePref[];
       return defaults.map((d: Device) => {
         const found = list.find((p: DevicePref) => p.id === d.id);
         if (found) {
@@ -132,12 +146,13 @@ export class StoreManager {
     if (!this.pref) {
       return;
     }
-    await this.pref.put('env', JSON.stringify({
+    const data: EnvPref = {
       temperature: env.temperature,
       humidity: env.humidity,
       illuminance: env.illuminance,
       occupancy: env.occupancy
-    }));
+    };
+    await this.pref.put('env', JSON.stringify(data));
     await this.pref.flush();
   }
 
@@ -153,7 +168,7 @@ export class StoreManager {
       return new EnvState();
     }
     try {
-      const data = JSON.parse(raw as string);
+      const data = JSON.parse(raw as string) as EnvPref;
       return new EnvState(data.temperature, data.humidity, data.illuminance, data.occupancy);
     } catch (e) {
       return new EnvState();
@@ -198,9 +213,9 @@ export class StoreManager {
       const id = resultSet.getString(resultSet.getColumnIndex('id'));
       const name = resultSet.getString(resultSet.getColumnIndex('name'));
       const enabled = resultSet.getLong(resultSet.getColumnIndex('enabled')) === 1;
-      const conditions: Condition[] = JSON.parse(resultSet.getString(resultSet.getColumnIndex('conditions')));
+      const conditions: Condition[] = JSON.parse(resultSet.getString(resultSet.getColumnIndex('conditions'))) as Condition[];
       const logic = resultSet.getString(resultSet.getColumnIndex('logic')) as Logic;
-      const actions: Action[] = JSON.parse(resultSet.getString(resultSet.getColumnIndex('actions')));
+      const actions: Action[] = JSON.parse(resultSet.getString(resultSet.getColumnIndex('actions'))) as Action[];
       const priority = resultSet.getLong(resultSet.getColumnIndex('priority'));
       rules.push(new Rule(id, name, conditions, logic, actions, priority, enabled));
     }
@@ -255,7 +270,7 @@ export class StoreManager {
         ruleName: resultSet.getString(resultSet.getColumnIndex('rule_name')),
         triggerCondition: resultSet.getString(resultSet.getColumnIndex('trigger_condition')),
         order: resultSet.getLong(resultSet.getColumnIndex('order_no')),
-        deviceChanges: JSON.parse(resultSet.getString(resultSet.getColumnIndex('device_changes'))),
+        deviceChanges: JSON.parse(resultSet.getString(resultSet.getColumnIndex('device_changes'))) as string[],
         conflictNote: resultSet.getString(resultSet.getColumnIndex('conflict_note'))
       });
     }

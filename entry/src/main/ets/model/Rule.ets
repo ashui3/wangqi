@@ -72,7 +72,13 @@ export class Rule {
 }
 
 /** 条件字段元信息 */
-export const CONDITION_FIELD_META: Record<ConditionField, { label: string; unit: string; isBoolean: boolean }> = {
+export interface ConditionFieldMeta {
+  label: string;
+  unit: string;
+  isBoolean: boolean;
+}
+
+export const CONDITION_FIELD_META: Record<ConditionField, ConditionFieldMeta> = {
   [ConditionField.TEMPERATURE]: { label: '温度', unit: '℃', isBoolean: false },
   [ConditionField.HUMIDITY]: { label: '湿度', unit: '%', isBoolean: false },
   [ConditionField.ILLUMINANCE]: { label: '光照', unit: 'lux', isBoolean: false },

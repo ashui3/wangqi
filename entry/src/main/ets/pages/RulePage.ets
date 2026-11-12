@@ -55,7 +55,7 @@ export struct RulePage {
     .bindSheet($$this.showEditor, this.EditorSheet(), {
       height: 520,
       showClose: true,
-      title: this.editingRule ? '编辑规则' : '新增规则'
+      title: { title: this.editingRule ? '编辑规则' : '新增规则' }
     })
   }
 
@@ -136,23 +136,34 @@ export struct RulePage {
   }
 
   private describeActions(rule: Rule): string {
-    const deviceNames: Record<string, string> = {
-      'light_main': '主灯', 'aircon': '空调', 'curtain': '窗帘', 'humidifier': '加湿器'
-    };
     const desc = rule.actions.map((a: Action) => {
-      const name = deviceNames[a.deviceId] || a.deviceId;
+      const name = this.deviceName(a.deviceId);
       return `${name}${a.on ? '开' : '关'}`;
     }).join('、');
     return `动作：${desc}`;
+  }
+
+  private deviceName(deviceId: string): string {
+    switch (deviceId) {
+      case 'light_main':
+        return '主灯';
+      case 'aircon':
+        return '空调';
+      case 'curtain':
+        return '窗帘';
+      case 'humidifier':
+        return '加湿器';
+      default:
+        return deviceId;
+    }
   }
 
   @Builder
   EditorSheet() {
     Column() {
       if (this.editingRule) {
-        TextInput({ text: this.editingRule.name })
+        TextInput({ text: this.editingRule.name, placeholder: '规则名称' })
           .height(44)
-          .placeholder('规则名称')
           .onChange((v: string) => {
             if (this.editingRule) {
               this.editingRule.name = v;

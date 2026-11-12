@@ -51,7 +51,16 @@ export class Device {
 }
 
 /** 设备类型元信息（UI 展示用） */
-export const DEVICE_TYPE_META: Record<DeviceType, { label: string; icon: string; hasValue: boolean; valueLabel: string; min: number; max: number }> = {
+export interface DeviceTypeMeta {
+  label: string;
+  icon: string;
+  hasValue: boolean;
+  valueLabel: string;
+  min: number;
+  max: number;
+}
+
+export const DEVICE_TYPE_META: Record<DeviceType, DeviceTypeMeta> = {
   [DeviceType.LIGHT]: { label: '灯', icon: '💡', hasValue: true, valueLabel: '亮度', min: 0, max: 100 },
   [DeviceType.AIRCON]: { label: '空调', icon: '❄️', hasValue: true, valueLabel: '温度', min: 16, max: 30 },
   [DeviceType.CURTAIN]: { label: '窗帘', icon: '🪟', hasValue: true, valueLabel: '开合度', min: 0, max: 100 },
