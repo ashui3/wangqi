@@ -4,10 +4,34 @@
  */
 import { LogEntry } from '../model/Log';
 import { appState } from '../store/AppState';
+import { onEvent, offEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct LogPage {
+  @State refreshFlag: number = 0;
+
+  aboutToAppear(): void {
+    onEvent((data: EventData) => {
+      this.refreshFlag++;
+    });
+  }
+
+  aboutToDisappear(): void {
+    offEvent();
+  }
+
   build() {
+    Column() {
+      if (this.refreshFlag >= 0) {
+        this.Content()
+      }
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  @Builder
+  Content() {
     Column() {
       Row() {
         Text('执行日志')

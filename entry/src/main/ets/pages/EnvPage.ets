@@ -4,10 +4,34 @@
  */
 import { ENV_FIELDS, EnvFieldMeta } from '../model/EnvState';
 import { appState } from '../store/AppState';
+import { onEvent, offEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct EnvPage {
+  @State refreshFlag: number = 0;
+
+  aboutToAppear(): void {
+    onEvent((data: EventData) => {
+      this.refreshFlag++;
+    });
+  }
+
+  aboutToDisappear(): void {
+    offEvent();
+  }
+
   build() {
+    Column() {
+      if (this.refreshFlag >= 0) {
+        this.Content()
+      }
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  @Builder
+  Content() {
     Column() {
       Text('模拟环境')
         .fontSize(22)

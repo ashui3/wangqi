@@ -4,10 +4,34 @@
  */
 import { Device, DEVICE_TYPE_META } from '../model/Device';
 import { appState } from '../store/AppState';
+import { onEvent, offEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct DevicePage {
+  @State refreshFlag: number = 0;
+
+  aboutToAppear(): void {
+    onEvent((data: EventData) => {
+      this.refreshFlag++;
+    });
+  }
+
+  aboutToDisappear(): void {
+    offEvent();
+  }
+
   build() {
+    Column() {
+      if (this.refreshFlag >= 0) {
+        this.Content()
+      }
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  @Builder
+  Content() {
     Column() {
       Text('设备控制')
         .fontSize(22)

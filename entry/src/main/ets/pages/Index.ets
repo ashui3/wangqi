@@ -3,7 +3,6 @@
  * Tab 导航：设备 / 环境 / 规则 / 场景 / 日志
  * 直接引用全局 appState 单例（@Observed），事件总线驱动刷新
  */
-import { appState } from '../store/AppState';
 import { onEvent, offEvent, EventData } from '../common/EventBus';
 import { DevicePage } from './DevicePage';
 import { EnvPage } from './EnvPage';
@@ -30,38 +29,41 @@ struct Index {
 
   build() {
     Column() {
-      Tabs({ barPosition: BarPosition.End }) {
-        TabContent() {
-          DevicePage()
-        }
-        .tabBar('设备')
+      // refreshFlag 参与渲染：事件触发时该值变化，强制整棵子树重绘
+      if (this.refreshFlag >= 0) {
+        Tabs({ barPosition: BarPosition.End }) {
+          TabContent() {
+            DevicePage()
+          }
+          .tabBar('设备')
 
-        TabContent() {
-          EnvPage()
-        }
-        .tabBar('环境')
+          TabContent() {
+            EnvPage()
+          }
+          .tabBar('环境')
 
-        TabContent() {
-          RulePage()
-        }
-        .tabBar('规则')
+          TabContent() {
+            RulePage()
+          }
+          .tabBar('规则')
 
-        TabContent() {
-          ScenePage()
-        }
-        .tabBar('场景')
+          TabContent() {
+            ScenePage()
+          }
+          .tabBar('场景')
 
-        TabContent() {
-          LogPage()
+          TabContent() {
+            LogPage()
+          }
+          .tabBar('日志')
         }
-        .tabBar('日志')
+        .barMode(BarMode.Fixed)
+        .onChange((index: number) => {
+          this.currentTab = index;
+        })
+        .width('100%')
+        .height('100%')
       }
-      .barMode(BarMode.Fixed)
-      .onChange((index: number) => {
-        this.currentTab = index;
-      })
-      .width('100%')
-      .height('100%')
     }
     .width('100%')
     .height('100%')

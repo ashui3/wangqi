@@ -6,13 +6,41 @@ import { Rule, Logic, Condition, ConditionField, Operator, Action } from '../mod
 import { DeviceType } from '../model/Device';
 import { appState } from '../store/AppState';
 import { describeCondition } from '../engine/ConditionEvaluator';
+import { onEvent, offEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct RulePage {
   @State showEditor: boolean = false;
   @State editingRule: Rule | null = null;
+  @State refreshFlag: number = 0;
+
+  aboutToAppear(): void {
+    onEvent((data: EventData) => {
+      this.refreshFlag++;
+    });
+  }
+
+  aboutToDisappear(): void {
+    offEvent();
+  }
 
   build() {
+    Column() {
+      if (this.refreshFlag >= 0) {
+        this.Content()
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .bindSheet($$this.showEditor, this.EditorSheet(), {
+      height: 520,
+      showClose: true,
+      title: { title: this.editingRule ? '编辑规则' : '新增规则' }
+    })
+  }
+
+  @Builder
+  Content() {
     Column() {
       Row() {
         Text('联动规则')
@@ -52,11 +80,6 @@ export struct RulePage {
     }
     .width('100%')
     .height('100%')
-    .bindSheet($$this.showEditor, this.EditorSheet(), {
-      height: 520,
-      showClose: true,
-      title: { title: this.editingRule ? '编辑规则' : '新增规则' }
-    })
   }
 
   @Builder
