@@ -4,48 +4,53 @@
  */
 import { LogEntry } from '../model/Log';
 import { appState } from '../store/AppState';
-import { onEvent, offEvent, EventData } from '../common/EventBus';
+import { onEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct LogPage {
   @State refreshFlag: number = 0;
+  private unsub: (() => void) | null = null;
 
   aboutToAppear(): void {
-    onEvent((data: EventData) => {
+    this.unsub = onEvent((data: EventData) => {
       this.refreshFlag++;
     });
   }
 
   aboutToDisappear(): void {
-    offEvent();
+    if (this.unsub) {
+      this.unsub();
+      this.unsub = null;
+    }
   }
 
   build() {
-    Column() {
-      if (this.refreshFlag >= 0) {
-        this.Content()
-      }
-    }
-    .width('100%')
-    .height('100%')
-  }
-
-  @Builder
-  Content() {
     Column() {
       Row() {
         Text('执行日志')
           .fontSize(22)
           .fontWeight(FontWeight.Bold)
         Blank()
-        Button('清空')
+        Button('刷新')
           .height(32)
           .fontSize(14)
           .backgroundColor('#f0f0f0')
           .fontColor('#333333')
           .borderRadius(8)
           .onClick(() => {
-            appState.clearLogs();
+            this.refreshFlag++;
+          })
+        Button('清空')
+          .height(32)
+          .fontSize(14)
+          .backgroundColor('#ffebeb')
+          .fontColor('#e33')
+          .borderRadius(8)
+          .margin({ left: 8 })
+          .onClick(() => {
+            appState.clearLogs().then(() => {
+              this.refreshFlag++;
+            });
           })
       }
       .width('100%')
@@ -70,7 +75,7 @@ export struct LogPage {
             ListItem() {
               this.LogCard(entry)
             }
-          }, (entry: LogEntry) => entry.id)
+          }, (entry: LogEntry) => `${entry.id}_${this.refreshFlag}`)
         }
         .width('100%')
         .layoutWeight(1)

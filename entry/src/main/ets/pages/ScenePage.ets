@@ -4,34 +4,27 @@
  */
 import { Scene } from '../model/Scene';
 import { appState } from '../store/AppState';
-import { onEvent, offEvent, EventData } from '../common/EventBus';
+import { onEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct ScenePage {
   @State refreshFlag: number = 0;
+  private unsub: (() => void) | null = null;
 
   aboutToAppear(): void {
-    onEvent((data: EventData) => {
+    this.unsub = onEvent((data: EventData) => {
       this.refreshFlag++;
     });
   }
 
   aboutToDisappear(): void {
-    offEvent();
+    if (this.unsub) {
+      this.unsub();
+      this.unsub = null;
+    }
   }
 
   build() {
-    Column() {
-      if (this.refreshFlag >= 0) {
-        this.Content()
-      }
-    }
-    .width('100%')
-    .height('100%')
-  }
-
-  @Builder
-  Content() {
     Column() {
       Text('场景演练')
         .fontSize(22)
@@ -73,7 +66,9 @@ export struct ScenePage {
           .fontColor('#FFFFFF')
           .borderRadius(8)
           .onClick(() => {
-            appState.loadScene(scene.id);
+            appState.loadScene(scene.id).then(() => {
+              this.refreshFlag++;
+            });
           })
       }
       .width('100%')
@@ -89,6 +84,12 @@ export struct ScenePage {
         .fontColor('#333333')
         .width('100%')
         .margin({ top: 6 })
+
+      Text(`当前环境：温度 ${appState.env.temperature}℃ · 湿度 ${appState.env.humidity}% · 光照 ${appState.env.illuminance}lux · ${appState.env.occupancy ? '有人' : '无人'}`)
+        .fontSize(12)
+        .fontColor('#1677ff')
+        .width('100%')
+        .margin({ top: 4 })
     }
     .width('100%')
     .padding(16)

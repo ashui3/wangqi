@@ -6,41 +6,33 @@ import { Rule, Logic, Condition, ConditionField, Operator, Action } from '../mod
 import { DeviceType } from '../model/Device';
 import { appState } from '../store/AppState';
 import { describeCondition } from '../engine/ConditionEvaluator';
-import { onEvent, offEvent, EventData } from '../common/EventBus';
+import { onEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct RulePage {
   @State showEditor: boolean = false;
   @State editingRule: Rule | null = null;
   @State refreshFlag: number = 0;
+  private unsub: (() => void) | null = null;
 
   aboutToAppear(): void {
-    onEvent((data: EventData) => {
+    this.unsub = onEvent((data: EventData) => {
       this.refreshFlag++;
     });
   }
 
   aboutToDisappear(): void {
-    offEvent();
+    if (this.unsub) {
+      this.unsub();
+      this.unsub = null;
+    }
+  }
+
+  private refresh(): void {
+    this.refreshFlag++;
   }
 
   build() {
-    Column() {
-      if (this.refreshFlag >= 0) {
-        this.Content()
-      }
-    }
-    .width('100%')
-    .height('100%')
-    .bindSheet($$this.showEditor, this.EditorSheet(), {
-      height: 520,
-      showClose: true,
-      title: { title: this.editingRule ? '编辑规则' : '新增规则' }
-    })
-  }
-
-  @Builder
-  Content() {
     Column() {
       Row() {
         Text('联动规则')
@@ -72,7 +64,7 @@ export struct RulePage {
           ListItem() {
             this.RuleCard(rule)
           }
-        }, (rule: Rule) => rule.id)
+        }, (rule: Rule) => `${rule.id}_${rule.enabled}_${this.refreshFlag}`)
       }
       .width('100%')
       .layoutWeight(1)
@@ -80,6 +72,11 @@ export struct RulePage {
     }
     .width('100%')
     .height('100%')
+    .bindSheet($$this.showEditor, this.EditorSheet(), {
+      height: 520,
+      showClose: true,
+      title: { title: this.editingRule ? '编辑规则' : '新增规则' }
+    })
   }
 
   @Builder
@@ -115,7 +112,9 @@ export struct RulePage {
         Toggle({ type: ToggleType.Switch, isOn: rule.enabled })
           .selectedColor('#1677ff')
           .onChange((isOn: boolean) => {
-            appState.toggleRule(rule.id);
+            appState.toggleRule(rule.id).then(() => {
+              this.refresh();
+            });
           })
         Blank()
         Button('编辑')
@@ -136,7 +135,9 @@ export struct RulePage {
           .borderRadius(6)
           .margin({ left: 8 })
           .onClick(() => {
-            appState.deleteRule(rule.id);
+            appState.deleteRule(rule.id).then(() => {
+              this.refresh();
+            });
           })
       }
       .width('100%')
@@ -284,12 +285,13 @@ export struct RulePage {
           .onClick(() => {
             if (this.editingRule) {
               const exists = appState.rules.some((r: Rule) => r.id === this.editingRule!.id);
-              if (exists) {
-                appState.updateRule(this.editingRule);
-              } else {
-                appState.addRule(this.editingRule);
-              }
-              this.showEditor = false;
+              const saveTask = exists
+                ? appState.updateRule(this.editingRule)
+                : appState.addRule(this.editingRule);
+              saveTask.then(() => {
+                this.showEditor = false;
+                this.refresh();
+              });
             }
           })
       }

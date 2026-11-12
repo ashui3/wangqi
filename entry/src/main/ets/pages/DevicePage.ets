@@ -1,37 +1,35 @@
 /**
  * 设备控制页
  * 展示 4 类设备，支持开关与数值调节
+ * 使用本地 @State 版本号驱动刷新，确保操作后 UI 实时更新
  */
 import { Device, DEVICE_TYPE_META } from '../model/Device';
 import { appState } from '../store/AppState';
-import { onEvent, offEvent, EventData } from '../common/EventBus';
+import { onEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct DevicePage {
   @State refreshFlag: number = 0;
+  private unsub: (() => void) | null = null;
 
   aboutToAppear(): void {
-    onEvent((data: EventData) => {
+    this.unsub = onEvent((data: EventData) => {
       this.refreshFlag++;
     });
   }
 
   aboutToDisappear(): void {
-    offEvent();
+    if (this.unsub) {
+      this.unsub();
+      this.unsub = null;
+    }
+  }
+
+  private refresh(): void {
+    this.refreshFlag++;
   }
 
   build() {
-    Column() {
-      if (this.refreshFlag >= 0) {
-        this.Content()
-      }
-    }
-    .width('100%')
-    .height('100%')
-  }
-
-  @Builder
-  Content() {
     Column() {
       Text('设备控制')
         .fontSize(22)
@@ -43,7 +41,7 @@ export struct DevicePage {
           ListItem() {
             this.DeviceCard(dev)
           }
-        }, (dev: Device) => dev.id)
+        }, (dev: Device) => `${dev.id}_${dev.on}_${dev.value}_${this.refreshFlag}`)
       }
       .width('100%')
       .layoutWeight(1)
@@ -82,6 +80,7 @@ export struct DevicePage {
           .margin({ right: 8 })
           .onChange((value: number) => {
             appState.setDeviceValue(dev.id, value);
+            this.refresh();
           })
         Text(`${dev.value}`)
           .fontSize(14)
@@ -93,6 +92,7 @@ export struct DevicePage {
         .selectedColor('#1677ff')
         .onChange((isOn: boolean) => {
           appState.toggleDevice(dev.id);
+          this.refresh();
         })
     }
     .width('100%')

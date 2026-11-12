@@ -1,60 +1,58 @@
 /**
- * 事件通信常量与工具
+ * 事件通信工具
  * 使用 @ohos.events.emitter 实现跨组件事件通知
- * 注意：负载仅用于通知"发生了什么"，不携带复杂对象，避免 ArkTS 对象字面量限制
+ * 每个订阅者使用独立的 eventId，避免 offEvent 互相干扰
  */
 import emitter from '@ohos.events.emitter';
 
 /** 事件类型 */
 export enum EventType {
-  /** 环境数据变化，触发规则重算 */
   ENV_CHANGED = 'event.env.changed',
-  /** 设备状态变化 */
   DEVICE_CHANGED = 'event.device.changed',
-  /** 规则列表变化（增删改、启停） */
   RULE_CHANGED = 'event.rule.changed',
-  /** 执行日志更新 */
   LOG_UPDATED = 'event.log.updated',
-  /** 场景载入 */
   SCENE_LOADED = 'event.scene.loaded'
 }
 
-/** 事件数据包装 */
+/** 事件数据 */
 export interface EventData {
   type: EventType;
 }
+
+/** 广播事件的公共 eventId（所有 emit/on 共用） */
+const BROADCAST_EVENT_ID: number = 1001;
 
 /**
  * 广播事件
  */
 export function emit(type: EventType): void {
-  const event: emitter.InnerEvent = {
-    eventId: 1,
-    priority: emitter.EventPriority.LOW
-  };
-  const data: EventData = { type: type };
-  emitter.emit(event, { data: data });
+  const data: emitter.EventData = { data: { type: type } };
+  emitter.emit({ eventId: BROADCAST_EVENT_ID, priority: emitter.EventPriority.IMMEDIATE }, data);
 }
 
 /**
  * 订阅事件
+ * 返回取消订阅函数
  */
-export function onEvent(callback: (data: EventData) => void): void {
-  const event: emitter.InnerEvent = {
-    eventId: 1,
-    priority: emitter.EventPriority.LOW
-  };
-  emitter.on(event, (inner: emitter.EventData) => {
-    const data = inner?.data as EventData;
-    if (data) {
-      callback(data);
+export function onEvent(callback: (data: EventData) => void): () => void {
+  const listener = (data: emitter.EventData): void => {
+    const payload = data?.data;
+    if (payload) {
+      const type = payload['type'] as EventType;
+      if (type) {
+        callback({ type: type });
+      }
     }
-  });
+  };
+  emitter.on({ eventId: BROADCAST_EVENT_ID, priority: emitter.EventPriority.IMMEDIATE }, listener);
+  return (): void => {
+    emitter.off(BROADCAST_EVENT_ID, listener);
+  };
 }
 
 /**
- * 取消订阅
+ * 取消订阅（兼容旧接口，用于不关心返回值时手动退订）
  */
 export function offEvent(): void {
-  emitter.off(1);
+  emitter.off(BROADCAST_EVENT_ID);
 }
