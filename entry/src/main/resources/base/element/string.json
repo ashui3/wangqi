@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "智能宿舍自动化规则编排App主模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "联动实验室主入口"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "联动实验室"
+    }
+  ]
+}

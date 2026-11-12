@@ -1,0 +1,10 @@
+/node_modules
+/oh_modules
+/.preview
+/build
+/.hvigor
+/.idea
+/entry/build
+/entry/.preview
+**/.DS_Store
+*.log
