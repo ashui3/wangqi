@@ -2,17 +2,21 @@
  * 数据模型与默认数据单元测试
  */
 import { describe, it, expect } from '@ohos/hypium';
-import { buildDefaultDevices, buildDefaultRules } from '../main/ets/common/DefaultData';
-import { buildDefaultScenes } from '../main/ets/model/Scene';
+import { buildDefaultDevices, buildDefaultRules } from '../../../main/ets/common/DefaultData';
+import { buildDefaultScenes } from '../../../main/ets/model/Scene';
 
 export default function defaultDataTest() {
   describe('DefaultDataTest', () => {
     it('default_devices_has_4_types', 0, () => {
       const devices = buildDefaultDevices();
       expect(devices.length >= 4).assertTrue();
-      const types = new Set<string>();
-      devices.forEach((d) => types.add(d.type));
-      expect(types.size >= 4).assertTrue();
+      const types: string[] = [];
+      devices.forEach((d) => {
+        if (types.indexOf(d.type) < 0) {
+          types.push(d.type);
+        }
+      });
+      expect(types.length >= 4).assertTrue();
     });
 
     it('default_rules_has_4_and_double_condition', 0, () => {

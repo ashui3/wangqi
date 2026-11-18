@@ -2,9 +2,9 @@
  * 条件求值单元测试
  */
 import { describe, it, expect } from '@ohos/hypium';
-import { Condition, ConditionField, Operator } from '../main/ets/model/Rule';
-import { EnvState } from '../main/ets/model/EnvState';
-import { evaluateCondition, compare, readFieldValue } from '../main/ets/engine/ConditionEvaluator';
+import { Condition, ConditionField, Operator } from '../../../main/ets/model/Rule';
+import { EnvState } from '../../../main/ets/model/EnvState';
+import { evaluateCondition, compare, readFieldValue } from '../../../main/ets/engine/ConditionEvaluator';
 
 export default function conditionEvaluatorTest() {
   describe('ConditionEvaluatorTest', () => {
@@ -15,6 +15,32 @@ export default function conditionEvaluatorTest() {
 
     it('compare_gte_works', 0, () => {
       expect(compare(28, Operator.GTE, 28)).assertTrue();
+    });
+
+    it('compare_all_operators_covered', 0, () => {
+      // LT：小于
+      expect(compare(20, Operator.LT, 28)).assertTrue();
+      expect(compare(28, Operator.LT, 28)).assertFalse();
+      // LTE：小于等于
+      expect(compare(28, Operator.LTE, 28)).assertTrue();
+      expect(compare(29, Operator.LTE, 28)).assertFalse();
+      // EQ：等于
+      expect(compare(28, Operator.EQ, 28)).assertTrue();
+      expect(compare(29, Operator.EQ, 28)).assertFalse();
+      // NEQ：不等于
+      expect(compare(29, Operator.NEQ, 28)).assertTrue();
+      expect(compare(28, Operator.NEQ, 28)).assertFalse();
+    });
+
+    it('evaluate_boundary_value_not_trigger', 0, () => {
+      // 温度恰好等于阈值 28，> 28 不应触发
+      const env = new EnvState(28, 50, 300, true);
+      const cond: Condition = { field: ConditionField.TEMPERATURE, operator: Operator.GT, value: 28 };
+      expect(evaluateCondition(cond, env)).assertFalse();
+      // 湿度恰好等于阈值 30，< 30 不应触发
+      const cond2: Condition = { field: ConditionField.HUMIDITY, operator: Operator.LT, value: 30 };
+      const env2 = new EnvState(25, 30, 300, false);
+      expect(evaluateCondition(cond2, env2)).assertFalse();
     });
 
     it('readFieldValue_occupancy_boolean', 0, () => {
