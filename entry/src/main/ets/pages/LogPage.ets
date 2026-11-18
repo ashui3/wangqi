@@ -4,25 +4,12 @@
  */
 import { LogEntry } from '../model/Log';
 import { appState } from '../store/AppState';
-import { onEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct LogPage {
+  /** 刷新信号（由父级传入），变化时强制重建列表 */
+  @Prop refreshSignal: number;
   @State refreshFlag: number = 0;
-  private unsub: (() => void) | null = null;
-
-  aboutToAppear(): void {
-    this.unsub = onEvent((data: EventData) => {
-      this.refreshFlag++;
-    });
-  }
-
-  aboutToDisappear(): void {
-    if (this.unsub) {
-      this.unsub();
-      this.unsub = null;
-    }
-  }
 
   build() {
     Column() {
@@ -75,7 +62,7 @@ export struct LogPage {
             ListItem() {
               this.LogCard(entry)
             }
-          }, (entry: LogEntry) => `${entry.id}_${this.refreshFlag}`)
+          }, (entry: LogEntry) => `${entry.id}_${this.refreshFlag}_${this.refreshSignal}`)
         }
         .width('100%')
         .layoutWeight(1)

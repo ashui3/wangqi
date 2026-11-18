@@ -6,27 +6,14 @@ import { Rule, Logic, Condition, ConditionField, Operator, Action } from '../mod
 import { DeviceType } from '../model/Device';
 import { appState } from '../store/AppState';
 import { describeCondition } from '../engine/ConditionEvaluator';
-import { onEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct RulePage {
   @State showEditor: boolean = false;
   @State editingRule: Rule | null = null;
   @State refreshFlag: number = 0;
-  private unsub: (() => void) | null = null;
-
-  aboutToAppear(): void {
-    this.unsub = onEvent((data: EventData) => {
-      this.refreshFlag++;
-    });
-  }
-
-  aboutToDisappear(): void {
-    if (this.unsub) {
-      this.unsub();
-      this.unsub = null;
-    }
-  }
+  /** 刷新信号（由父级传入），变化时强制重建列表 */
+  @Prop refreshSignal: number;
 
   private refresh(): void {
     this.refreshFlag++;
@@ -64,7 +51,7 @@ export struct RulePage {
           ListItem() {
             this.RuleCard(rule)
           }
-        }, (rule: Rule) => `${rule.id}_${rule.enabled}_${this.refreshFlag}`)
+        }, (rule: Rule) => `${rule.id}_${rule.enabled}_${this.refreshFlag}_${this.refreshSignal}`)
       }
       .width('100%')
       .layoutWeight(1)
