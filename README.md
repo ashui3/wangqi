@@ -167,9 +167,38 @@ const triggered = rule.logic === Logic.AND
 
 ## 五、运行方式
 
-1. 用 **DevEco Studio（API 12 / HarmonyOS 5.0.0）** 打开本项目根目录；
-2. 同步依赖后，选择 `entry` 模块在模拟器或真机运行；
-3. 单元测试：运行 `ohosTest` 目标（`TestAbility` 触发 Hypium 测试套件）。
+> ⚠️ **重要**：本项目使用了 `@ohos.events.emitter`（事件通信）、`@ohos.data.preferences` / `@ohos.data.relationalStore`（持久化）等系统 API，**这些能力 DevEco 预览器（Previewer）不支持**。必须用**模拟器或真机**运行，否则会出现"环境数值无法改变、联动无反应"等现象（数据实际已修改，只是 UI 不刷新）。
+
+### 5.1 前置环境
+
+1. 安装 **DevEco Studio 5.0 及以上**，并配置 **HarmonyOS SDK API 12**。
+2. 模拟器运行需要 **Hyper-V 虚拟化**（Windows）：
+   - `Win + R` → 输入 `optionalfeatures` → 勾选 **Hyper-V**、**Windows 虚拟机监控程序平台（Virtual Machine Platform）**、**虚拟机平台** → 确定 → **重启电脑**。
+   - 注：仅 BIOS 开启 CPU 虚拟化（VT-x / AMD-V）还不够，必须开启 Windows 层的 Hyper-V，否则模拟器会报"没有虚拟化"。
+3. 若有华为/荣耀真机（HarmonyOS 4.0+），可用 USB 真机调试，无需虚拟化。
+
+### 5.2 运行步骤
+
+1. 用 DevEco Studio 打开本项目根目录，等待 Sync 完成；
+2. `Tools → Device Manager` 下载 Phone 系统镜像并**启动模拟器**（或连接真机）；
+3. 顶部工具栏选择 `entry` 模块 + 模拟器/真机，点击 **▶ Run**；
+4. 单元测试：运行 `ohosTest` 目标（`TestAbility` 触发 Hypium 测试套件）。
+
+### 5.3 命令行构建验证（可选）
+
+无 DevEco 环境时，可用 DevEco 内置的 hvigor 做编译验证（不依赖虚拟化）：
+
+```bash
+# 以 DevEco Studio 安装路径为例
+DEVECO_SDK_HOME="C:\\Program Files\\Huawei\\DevEco Studio\\sdk" \
+NODE_HOME="C:\\Program Files\\Huawei\\DevEco Studio\\tools\\node" \
+"/c/Program Files/Huawei/DevEco Studio/tools/node/node.exe" \
+  "/c/Program Files/Huawei/DevEco Studio/tools/hvigor/bin/hvigorw.js" \
+  --mode module -p module=entry@default -p product=default assembleHap \
+  --analyze=normal --parallel --incremental --daemon=false
+```
+
+编译产物：`entry/build/default/outputs/default/entry-default-unsigned.hap`。
 
 ## 六、需求覆盖对照
 
