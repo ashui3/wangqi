@@ -24,7 +24,6 @@ export interface DeviceExtra {
 /**
  * 设备实体
  * extra 为可选，灯可存亮度、空调可存温度、窗帘可存开合度
- * 使用 @Observed 使属性变化可被 UI 观察
  */
 @Observed
 export class Device {

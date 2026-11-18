@@ -4,25 +4,12 @@
  */
 import { Scene } from '../model/Scene';
 import { appState } from '../store/AppState';
-import { onEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct ScenePage {
   @State refreshFlag: number = 0;
-  private unsub: (() => void) | null = null;
-
-  aboutToAppear(): void {
-    this.unsub = onEvent((data: EventData) => {
-      this.refreshFlag++;
-    });
-  }
-
-  aboutToDisappear(): void {
-    if (this.unsub) {
-      this.unsub();
-      this.unsub = null;
-    }
-  }
+  /** 刷新信号（由父级传入），变化时刷新当前环境显示 */
+  @Prop refreshSignal: number;
 
   build() {
     Column() {
@@ -41,7 +28,7 @@ export struct ScenePage {
           ListItem() {
             this.SceneCard(scene)
           }
-        }, (scene: Scene) => scene.id)
+        }, (scene: Scene) => `${scene.id}_${this.refreshFlag}_${this.refreshSignal}`)
       }
       .width('100%')
       .layoutWeight(1)

@@ -4,7 +4,6 @@
  * 直接内联 Slider 绑定 @State，避免 @Builder 传参非响应式导致的数值不刷新
  */
 import { appState } from '../store/AppState';
-import { onEvent, EventData } from '../common/EventBus';
 
 @Component
 export struct EnvPage {
@@ -12,23 +11,29 @@ export struct EnvPage {
   @State humidity: number = appState.env.humidity;
   @State illuminance: number = appState.env.illuminance;
   @State occupancy: boolean = appState.env.occupancy;
-  private unsub: (() => void) | null = null;
+  /** 刷新信号（由父级传入），变化时同步环境数据（如场景载入后） */
+  @Prop @Watch('onRefreshSignal') refreshSignal: number;
 
   aboutToAppear(): void {
-    this.unsub = onEvent((data: EventData) => {
-      // 环境数据可能被场景载入等操作改变，同步回本地状态
-      this.temperature = appState.env.temperature;
-      this.humidity = appState.env.humidity;
-      this.illuminance = appState.env.illuminance;
-      this.occupancy = appState.env.occupancy;
-    });
+    this.syncEnv();
   }
 
-  aboutToDisappear(): void {
-    if (this.unsub) {
-      this.unsub();
-      this.unsub = null;
-    }
+  /**
+   * refreshSignal 变化时的回调：同步全局环境数据到本地
+   */
+  onRefreshSignal(): void {
+    this.syncEnv();
+  }
+
+  /**
+   * 从全局状态同步环境数据到本地 @State
+   * 场景载入等操作会改变 appState.env，通过 refreshSignal 触发同步
+   */
+  private syncEnv(): void {
+    this.temperature = appState.env.temperature;
+    this.humidity = appState.env.humidity;
+    this.illuminance = appState.env.illuminance;
+    this.occupancy = appState.env.occupancy;
   }
 
   build() {

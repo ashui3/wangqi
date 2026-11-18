@@ -42,7 +42,7 @@ struct Index {
         .tabBar('设备')
 
         TabContent() {
-          EnvPage()
+          EnvPage({ refreshSignal: this.refreshSignal })
         }
         .tabBar('环境')
 
@@ -52,7 +52,7 @@ struct Index {
         .tabBar('规则')
 
         TabContent() {
-          ScenePage()
+          ScenePage({ refreshSignal: this.refreshSignal })
         }
         .tabBar('场景')
 

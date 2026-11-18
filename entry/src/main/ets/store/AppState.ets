@@ -1,6 +1,7 @@
 /**
  * 全局应用状态（状态管理）
- * 使用 @Observed + @ObjectLink 实现响应式状态
+ * 全局单例承载设备/环境/规则/日志/场景数据；
+ * 页面刷新由事件总线 + @State/@Prop 刷新信号驱动，见 pages/Index.ets。
  */
 import { Device } from '../model/Device';
 import { EnvState } from '../model/EnvState';
